@@ -9,3 +9,7 @@ spring:
   output:
     ansi:
       enabled: ALWAYS
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
