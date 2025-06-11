@@ -10,7 +10,7 @@ import static com.github.narcispurghel.bookswap.constant.EndpointsConstants.SCAL
 
 @Controller
 @RequestMapping(value = DOCUMENTATION_ENDPOINT)
-public class DocumentationController {
+public class DocsController {
     
     @GetMapping(SCALAR_ENDPOINT)
     public Mono<String> getScalar() {

@@ -13,3 +13,13 @@ spring:
     prefix: classpath:/templates/
     suffix: .html
     cache: false
+  security:
+    webflux:
+      formLogin:
+        enabled: false
+
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG
