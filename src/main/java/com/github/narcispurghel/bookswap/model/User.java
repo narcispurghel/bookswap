@@ -13,14 +13,14 @@ public class User implements UserDetails {
     
     @Id
     private UUID id;
+    private String email;
     private String firstName;
     private String lastName;
+    private String password;
     private boolean isAccountNonExpired = true;
     private boolean isAccountNonLocked = true;
     private boolean isCredentialsNonExpired = true;
     private boolean isEnabled = true;
-    private String password;
-    private String email;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
     private Set<Authority> authorities = new HashSet<>();

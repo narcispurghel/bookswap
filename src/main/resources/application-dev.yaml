@@ -13,6 +13,9 @@ spring:
     prefix: classpath:/templates/
     suffix: .html
     cache: false
+  flyway:
+    locations: "classpath:db/postgres/migration"
+    url: ${SPRING_J2BC_URL}
   security:
     webflux:
       formLogin:
@@ -20,6 +23,13 @@ spring:
 
 logging:
   level:
+    web: DEBUG
     org:
       springframework:
         security: DEBUG
+        boot:
+          autoconfigure:
+            flyway: DEBUG
+        jdbc:
+          datasource: DEBUG
+      flywaydb: DEBUG
