@@ -3,7 +3,7 @@ CREATE TABLE users(
     email VARCHAR(50) NOT NULL UNIQUE,
     first_name VARCHAR(25) NOT NULL,
     last_name VARCHAR(25) NOT NULL,
-    password VARCHAR(50) NOT NULL,
+    password TEXT NOT NULL,
     is_account_non_expired BOOLEAN NOT NULL DEFAULT TRUE,
     is_account_non_locked BOOLEAN NOT NULL DEFAULT TRUE,
     is_credentials_non_expired BOOLEAN NOT NULL DEFAULT TRUE,

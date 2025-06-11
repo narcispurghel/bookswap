@@ -1,5 +1,6 @@
-package com.github.narcispurghel.bookswap.model;
+package com.github.narcispurghel.bookswap.entity;
 
+import com.github.narcispurghel.bookswap.enums.AuthorityType;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.security.core.GrantedAuthority;
@@ -23,10 +24,13 @@ public class User implements UserDetails {
     private boolean isEnabled = true;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
-    private Set<Authority> authorities = new HashSet<>();
     
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        Authority authority = new Authority();
+        authority.setAuthorityType(AuthorityType.USER);
+        Set<Authority> authorities = new HashSet<>();
+        authorities.add(authority);
         return authorities;
     }
     
@@ -118,10 +122,6 @@ public class User implements UserDetails {
         this.updatedAt = updatedAt;
     }
     
-    public void setAuthorities(Set<Authority> authorities) {
-        this.authorities = new HashSet<>(authorities);
-    }
-    
     @Override public boolean equals(Object o) {
         if (!(o instanceof User user)) {
             return false;
@@ -136,8 +136,7 @@ public class User implements UserDetails {
                Objects.equals(password, user.password) &&
                Objects.equals(email, user.email) &&
                Objects.equals(createdAt, user.createdAt) &&
-               Objects.equals(updatedAt, user.updatedAt) &&
-               Objects.equals(authorities, user.authorities);
+               Objects.equals(updatedAt, user.updatedAt);
     }
     
     @Override public int hashCode() {
@@ -151,7 +150,6 @@ public class User implements UserDetails {
                             password,
                             email,
                             createdAt,
-                            updatedAt,
-                            authorities);
+                            updatedAt);
     }
 }
