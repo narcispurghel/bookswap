@@ -1,0 +1,11 @@
+server:
+  port: 8081
+
+spring:
+  r2dbc:
+    url: ${SPRING_R2BC_URL}
+    username: ${SPRING_R2DBC_USERNAME}
+    password: ${SPRING_R2DBC_PASSWORD}
+  output:
+    ansi:
+      enabled: ALWAYS
