@@ -14,4 +14,6 @@ public interface AuthService {
             ServerWebExchange serverWebExchange);
 
     Mono<UserWithAuthorities> saveUserAsync(Data<SignupRequest> requestBody);
+
+    Mono<String> logout(ServerWebExchange serverWebExchange);
 }

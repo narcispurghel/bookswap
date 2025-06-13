@@ -42,4 +42,10 @@ public class AuthController {
             ServerWebExchange serverWebExchange) {
         return authService.authenticate(requestBody, serverWebExchange);
     }
+
+    @PostMapping(LOGOUT_ENDPOINT)
+    public Mono<ResponseEntity<String>> logout(ServerWebExchange serverWebExchange) {
+        return authService.logout(serverWebExchange)
+                .map(message -> ResponseEntity.ok(message));
+    }
 }

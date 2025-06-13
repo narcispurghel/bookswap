@@ -15,11 +15,13 @@ import com.github.narcispurghel.bookswap.repository.UserRepository;
 import com.github.narcispurghel.bookswap.service.AuthService;
 import com.github.narcispurghel.bookswap.service.JwtService;
 import com.github.narcispurghel.bookswap.service.UserService;
+import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,8 +32,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -79,44 +80,6 @@ public class AuthServiceImpl implements AuthService {
                         serverWebExchange));
     }
 
-    public Mono<Authentication> generateAuthenticationToken(LoginRequest loginRequest) {
-        UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(loginRequest.email(),
-                        loginRequest.password());
-        return reactiveAuthenticationManager.authenticate(authToken)
-                .switchIfEmpty(Mono.error(
-                        new ResponseStatusException(HttpStatusCode.valueOf(401),
-                                "Bad credentials"))) // TODO Create custom exceptions
-                .onErrorMap(
-                        error -> new ResponseStatusException(HttpStatusCode.valueOf(401),
-                                "Bad credentials")); // TODO Create custom exceptions
-    }
-
-    public Mono<Map<String, String>> generateTokensAndCookies(
-            Authentication authentication, ServerWebExchange serverWebExchange) {
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken",
-                        jwtService.generateToken(userDetails, JwtTokenType.REFRESH))
-                .path("/")
-                .httpOnly(true)
-                .secure(false) // TODO Set to true in production
-                .maxAge(3600)
-                .build();
-        ResponseCookie accessCookie = ResponseCookie.from("accessToken",
-                        jwtService.generateToken(userDetails, JwtTokenType.ACCESS))
-                .path("/")
-                .httpOnly(true)
-                .secure(false) // TODO Set to true in production
-                .maxAge(360)
-                .build();
-        serverWebExchange.getResponse().addCookie(refreshCookie);
-        serverWebExchange.getResponse().addCookie(accessCookie);
-        Map<String, String> responseBody = new HashMap<>();
-        responseBody.put("accessToken", accessCookie.getValue());
-        responseBody.put("refreshToken", refreshCookie.getValue());
-        return Mono.just(responseBody);
-    }
-
     @Transactional
     @Override
     public Mono<UserWithAuthorities> saveUserAsync(Data<SignupRequest> requestBody) {
@@ -146,5 +109,75 @@ public class AuthServiceImpl implements AuthService {
                                     userService.getUserWithAuthoritiesByEmailAsync(
                                             fetchedUser.getEmail()));
                 });
+    }
+
+    @Override
+    public Mono<String> logout(ServerWebExchange serverWebExchange) {
+        return generateLogoutCookie().map(logoutCookies -> {
+                    serverWebExchange.getResponse().addCookie(logoutCookies.get(
+                            "accessCookie"));
+                    serverWebExchange.getResponse().addCookie(logoutCookies.get(
+                            "refreshCookie"));
+                    return serverWebExchange;
+                }).contextWrite(
+                        context -> ReactiveSecurityContextHolder.withAuthentication(null))
+                .map(exchange -> "Logout success!");
+    }
+
+    private Mono<Map<String, ResponseCookie>> generateLogoutCookie() {
+        Map<String, ResponseCookie> logoutCookies = new HashMap<>();
+        ResponseCookie accessCookie = ResponseCookie.from("accessToken", null)
+                .maxAge(0)
+                .path("/")
+                .httpOnly(true)
+                .secure(false) // TODO change to true in production
+                .build();
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", null)
+                .maxAge(0)
+                .path("/")
+                .httpOnly(true)
+                .secure(false) // TODO change to true in production
+                .build();
+        logoutCookies.put("accessCookie", accessCookie);
+        logoutCookies.put("refreshCookie", refreshCookie);
+        return Mono.just(logoutCookies);
+    }
+
+    private Mono<Authentication> generateAuthenticationToken(LoginRequest loginRequest) {
+        UsernamePasswordAuthenticationToken authToken =
+                new UsernamePasswordAuthenticationToken(loginRequest.email(),
+                        loginRequest.password());
+        return reactiveAuthenticationManager.authenticate(authToken)
+                .switchIfEmpty(Mono.error(
+                        new ResponseStatusException(HttpStatusCode.valueOf(401),
+                                "Bad credentials"))) // TODO Create custom exceptions
+                .onErrorMap(
+                        error -> new ResponseStatusException(HttpStatusCode.valueOf(401),
+                                "Bad credentials")); // TODO Create custom exceptions
+    }
+
+    private Mono<Map<String, String>> generateTokensAndCookies(
+            Authentication authentication, ServerWebExchange serverWebExchange) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken",
+                        jwtService.generateToken(userDetails, JwtTokenType.REFRESH))
+                .path("/")
+                .httpOnly(true)
+                .secure(false) // TODO Set to true in production
+                .maxAge(3600)
+                .build();
+        ResponseCookie accessCookie = ResponseCookie.from("accessToken",
+                        jwtService.generateToken(userDetails, JwtTokenType.ACCESS))
+                .path("/")
+                .httpOnly(true)
+                .secure(false) // TODO Set to true in production
+                .maxAge(360)
+                .build();
+        serverWebExchange.getResponse().addCookie(refreshCookie);
+        serverWebExchange.getResponse().addCookie(accessCookie);
+        Map<String, String> responseBody = new HashMap<>();
+        responseBody.put("accessToken", accessCookie.getValue());
+        responseBody.put("refreshToken", refreshCookie.getValue());
+        return Mono.just(responseBody);
     }
 }

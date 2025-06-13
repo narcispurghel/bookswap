@@ -17,7 +17,7 @@ public final class EndpointsConstants {
             Set.of(AUTHENTICATION_ENDPOINT + LOGIN_ENDPOINT,
                     AUTHENTICATION_ENDPOINT + SIGNUP_ENDPOINT,
                     HOME_ENDPOINT,
-                    SCALAR_ENDPOINT,
+                    DOCUMENTATION_ENDPOINT + SCALAR_ENDPOINT,
                     OPENAPI_ENDPOINT);
 
     private EndpointsConstants() {

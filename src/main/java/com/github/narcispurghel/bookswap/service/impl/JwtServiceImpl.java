@@ -17,6 +17,7 @@ import java.util.UUID;
 public class JwtServiceImpl implements JwtService {
     private static final String AUDIENCE = "bookswap";
     private static final String ISSUER = "bookswap";
+
     private final String jwtSecretKey;
 
     public JwtServiceImpl(

@@ -64,8 +64,7 @@ public class UserServiceImpl implements UserService {
                                     .collect(Collectors.toSet());
                     Mono<Set<AuthorityDto>> authoritiesDtoMono =
                             authoritiesIds.flatMap(
-                                    uuids -> authorityRepository.findAllAuthorityDtoByIds(
-                                                    uuids)
+                                    uuids -> authorityRepository.findAllAuthorityDtoByIds(uuids)
                                             .collect(Collectors.toSet()));
                     return Mono.zip(Mono.just(userDto), authoritiesDtoMono)
                             .map(tuple -> {
