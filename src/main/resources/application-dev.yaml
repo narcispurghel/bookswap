@@ -1,5 +1,7 @@
 server:
   port: 8081
+  error:
+    include-stacktrace: never
 
 spring:
   r2dbc:
@@ -23,21 +25,23 @@ spring:
 
 logging:
   level:
-    web: DEBUG
+    web: INFO
     org:
       springframework:
         security: DEBUG
-        boot:
-          autoconfigure:
-            flyway: DEBUG
-        web:
-          reactive:
-            result:
-              method:
-                annotation: DEBUG
-        validation: DEBUG
-        jdbc:
-          datasource: DEBUG
-      flywaydb: DEBUG
+      flywaydb: INFO
     jakarta:
-      validation=DEBUG:
+      validation: DEBUG
+    com:
+      github:
+        narcispurghel:
+          bookswap:
+            security:
+              impl:
+                JwtSecurityFilterImpl: DEBUG
+
+
+
+security:
+  jwt:
+    secret-key: ${SECURITY_JWT_SECRET_KEY}

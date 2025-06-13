@@ -12,7 +12,7 @@ import static com.github.narcispurghel.bookswap.constant.EndpointsConstants.SCAL
 @Controller
 @RequestMapping(value = DOCUMENTATION_ENDPOINT, produces = MediaType.TEXT_HTML_VALUE)
 public class DocsController {
-    
+
     @GetMapping(SCALAR_ENDPOINT)
     public Mono<String> getScalar() {
         return Mono.just("scalar");

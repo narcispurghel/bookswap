@@ -11,14 +11,15 @@ import org.springframework.context.annotation.Configuration;
 @EnableConfigurationProperties({R2dbcProperties.class, FlywayProperties.class})
 class DbConfig {
     @Bean(initMethod = "migrate")
-    public Flyway flyway(FlywayProperties flywayProperties, R2dbcProperties r2dbcProperties) {
+    public Flyway flyway(FlywayProperties flywayProperties,
+            R2dbcProperties r2dbcProperties) {
         return Flyway.configure()
-                     .dataSource(
-                             flywayProperties.getUrl(),
-                             r2dbcProperties.getUsername(),
-                             r2dbcProperties.getPassword()
-                     )
-                     .locations(flywayProperties.getLocations().toArray(String[]::new))
-                     .load();
+                .dataSource(
+                        flywayProperties.getUrl(),
+                        r2dbcProperties.getUsername(),
+                        r2dbcProperties.getPassword()
+                )
+                .locations(flywayProperties.getLocations().toArray(String[]::new))
+                .load();
     }
 }

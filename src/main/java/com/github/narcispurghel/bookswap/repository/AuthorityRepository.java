@@ -14,18 +14,18 @@ import java.util.UUID;
 
 @Repository
 public interface AuthorityRepository extends ReactiveCrudRepository<Authority, UUID> {
-    
+
     @Query(value = """
-                   SELECT a.authority_type FROM authorities a
-                   WHERE a.id IN (:authorityId)
-                   """)
+            SELECT a.authority_type FROM authorities a
+            WHERE a.id IN (:authorityId)
+            """)
     Flux<AuthorityDto> findAllAuthorityDtoByIds(@Param(value = "authorityIds")
-                                                Set<UUID> authorityIds);
-    
+    Set<UUID> authorityIds);
+
     @Query("""
-           SELECT * FROM authorities a
-           WHERE a.authority_type = :authorityType
-           """)
+            SELECT * FROM authorities a
+            WHERE a.authority_type = :authorityType
+            """)
     Mono<Authority> findByAuthorityType(
             @Param(value = "authorityType") String authorityType);
 }

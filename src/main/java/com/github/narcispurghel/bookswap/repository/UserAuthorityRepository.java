@@ -13,8 +13,8 @@ import java.util.UUID;
 public interface UserAuthorityRepository extends ReactiveCrudRepository<UserAuthority,
         UUID> {
     @Query(value = """
-                   SELECT * FROM users_authorities ua
-                   WHERE ua.user_id = :userId
-                   """)
+            SELECT * FROM users_authorities ua
+            WHERE ua.user_id = :userId
+            """)
     Flux<UserAuthority> findAllByUserId(@Param(value = "userId") UUID userId);
 }
