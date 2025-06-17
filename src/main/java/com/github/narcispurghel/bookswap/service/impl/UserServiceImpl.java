@@ -43,8 +43,13 @@ public class UserServiceImpl implements UserService {
                     .map(tuple -> {
                         UserSecurity fetchedUserSecurity = tuple.getT1();
                         Set<Authority> fetchedAuthorities = tuple.getT2();
+                        if (!fetchedUserSecurity.isEmailVerified()) {
+                            // TODO create custom exception
+                            throw new RuntimeException("Email is not verified");
+                        }
                         return new UserDetailsDto(fetchedUserSecurity.email(),
                                 fetchedUserSecurity.password(),
+                                fetchedUserSecurity.isEmailVerified(),
                                 fetchedUserSecurity.isAccountNonExpired(),
                                 fetchedUserSecurity.isAccountNonLocked(),
                                 fetchedUserSecurity.isCredentialsNonExpired(),
@@ -55,7 +60,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Mono<UserWithAuthorities> getUserWithAuthoritiesByEmailAsync(String email) {
+    public Mono<UserWithAuthorities> getUserWithAuthoritiesByEmail(String email) {
         return userRepository.findUserDtoByEmail(email)
                 .flatMap(userDto -> {
                     Mono<Set<UUID>> authoritiesIds =
@@ -64,7 +69,8 @@ public class UserServiceImpl implements UserService {
                                     .collect(Collectors.toSet());
                     Mono<Set<AuthorityDto>> authoritiesDtoMono =
                             authoritiesIds.flatMap(
-                                    uuids -> authorityRepository.findAllAuthorityDtoByIds(uuids)
+                                    uuids -> authorityRepository.findAllAuthorityDtoByIds(
+                                                    uuids)
                                             .collect(Collectors.toSet()));
                     return Mono.zip(Mono.just(userDto), authoritiesDtoMono)
                             .map(tuple -> {

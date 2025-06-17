@@ -1,21 +1,24 @@
 package com.github.narcispurghel.bookswap.service.impl;
 
 import com.github.narcispurghel.bookswap.entity.Authority;
+import com.github.narcispurghel.bookswap.entity.EmailVerification;
 import com.github.narcispurghel.bookswap.entity.User;
 import com.github.narcispurghel.bookswap.entity.UserAuthority;
 import com.github.narcispurghel.bookswap.enums.AuthorityType;
 import com.github.narcispurghel.bookswap.enums.JwtTokenType;
-import com.github.narcispurghel.bookswap.model.Data;
-import com.github.narcispurghel.bookswap.model.LoginRequest;
-import com.github.narcispurghel.bookswap.model.SignupRequest;
-import com.github.narcispurghel.bookswap.model.UserWithAuthorities;
+import com.github.narcispurghel.bookswap.mapper.UserMapper;
+import com.github.narcispurghel.bookswap.model.*;
 import com.github.narcispurghel.bookswap.repository.AuthorityRepository;
+import com.github.narcispurghel.bookswap.repository.EmailVerificationRepository;
 import com.github.narcispurghel.bookswap.repository.UserAuthorityRepository;
 import com.github.narcispurghel.bookswap.repository.UserRepository;
 import com.github.narcispurghel.bookswap.service.AuthService;
+import com.github.narcispurghel.bookswap.service.EmailVerificationService;
 import com.github.narcispurghel.bookswap.service.JwtService;
 import com.github.narcispurghel.bookswap.service.UserService;
-import org.springframework.http.HttpCookie;
+import io.swagger.v3.core.converter.ModelConverter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
@@ -29,15 +32,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
-import reactor.util.Logger;
-import reactor.util.Loggers;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
 public class AuthServiceImpl implements AuthService {
-    private static final Logger LOGGER = Loggers.getLogger(AuthServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthServiceImpl.class);
 
+    private final UserMapper userMapper;
     private final ReactiveAuthenticationManager reactiveAuthenticationManager;
     private final PasswordEncoder passwordEncoder;
     private final UserService userService;
@@ -45,14 +48,20 @@ public class AuthServiceImpl implements AuthService {
     private final AuthorityRepository authorityRepository;
     private final UserAuthorityRepository userAuthorityRepository;
     private final JwtService jwtService;
+    private final EmailVerificationService emailVerificationService;
+    private final EmailVerificationRepository emailVerificationRepository;
 
-    public AuthServiceImpl(ReactiveAuthenticationManager reactiveAuthenticationManager,
+    public AuthServiceImpl(UserMapper userMapper,
+            ReactiveAuthenticationManager reactiveAuthenticationManager,
             PasswordEncoder passwordEncoder,
             UserService userService,
             UserRepository userRepository,
             AuthorityRepository authorityRepository,
             UserAuthorityRepository userAuthorityRepository,
-            JwtService jwtService) {
+            JwtService jwtService,
+            EmailVerificationService emailVerificationService,
+            EmailVerificationRepository emailVerificationRepository) {
+        this.userMapper = userMapper;
         this.reactiveAuthenticationManager = reactiveAuthenticationManager;
         this.passwordEncoder = passwordEncoder;
         this.userService = userService;
@@ -60,6 +69,8 @@ public class AuthServiceImpl implements AuthService {
         this.authorityRepository = authorityRepository;
         this.userAuthorityRepository = userAuthorityRepository;
         this.jwtService = jwtService;
+        this.emailVerificationService = emailVerificationService;
+        this.emailVerificationRepository = emailVerificationRepository;
     }
 
     @Override
@@ -74,16 +85,35 @@ public class AuthServiceImpl implements AuthService {
                 .switchIfEmpty(Mono.error(
                         new ResponseStatusException(HttpStatusCode.valueOf(401),
                                 "Bad credentials"))) // TODO Create custom exceptions
+                .doOnError(error -> LOGGER.debug("User not found in database"))
                 .doOnNext(exists -> LOGGER.info("Found user in database"))
                 .flatMap(exist -> generateAuthenticationToken(loginRequest))
                 .flatMap(authentication -> generateTokensAndCookies(authentication,
                         serverWebExchange));
     }
 
-    @Transactional
     @Override
-    public Mono<UserWithAuthorities> saveUserAsync(Data<SignupRequest> requestBody) {
-        if (requestBody == null) {
+    public Mono<UserWithAuthorities> signup(SignupRequest request) {
+        if (request == null) {
+            return Mono.error(new ResponseStatusException(HttpStatusCode.valueOf(400)));
+        }
+        return this.saveUser(request)
+                .doOnSuccess(user -> {
+                    emailVerificationRepository.findById(user.id())
+/*                            .doOnSuccess(verification -> {
+                                emailVerificationService.sendCode(new VerificationDetails(
+                                                verification.getVerificationCode(),
+                                                user.email(),
+                                                user.firstName()))
+                                        .subscribe();
+                            })*/
+                            .subscribe();
+                });
+    }
+
+    @Transactional
+    private Mono<UserWithAuthorities> saveUser(SignupRequest request) {
+        if (request == null) {
             return Mono.error(new ResponseStatusException(HttpStatusCode.valueOf(400)));
         }
         Mono<Authority> authorityMono =
@@ -91,22 +121,27 @@ public class AuthServiceImpl implements AuthService {
                         .switchIfEmpty(Mono.error(() -> new ResponseStatusException(
                                 HttpStatusCode.valueOf(500),
                                 "No authority found with name USER")));
-        User user = new User();
-        user.setEmail(requestBody.data().email());
-        user.setFirstName(requestBody.data().firstName());
-        user.setLastName(requestBody.data().lastName());
-        user.setPassword(passwordEncoder.encode(requestBody.data().password()));
-        Mono<User> userMono = userRepository.save(user);
+        Mono<User> userMono = userRepository.save(userMapper.toUser(request));
         return Mono.zip(authorityMono, userMono)
                 .flatMap(tuple -> {
                     Authority fetchedAuthority = tuple.getT1();
                     User fetchedUser = tuple.getT2();
                     UserAuthority userAuthority = new UserAuthority();
-                    userAuthority.setUserId(user.getId());
+                    userAuthority.setUserId(fetchedUser.getId());
                     userAuthority.setAuthorityId(fetchedAuthority.getId());
-                    return userAuthorityRepository.save(userAuthority)
+                    return emailVerificationService.generateCode()
+                            .flatMap(
+                                    code -> emailVerificationRepository.saveEmailVerification(
+                                            fetchedUser.getId(), code,
+                                            LocalDateTime.now().plusSeconds(360)))
+                            // TODO simplify by returning
+                            //  UserWithAuthority when saving
+                            //  to db
+                            .flatMap(
+                                    verification -> userAuthorityRepository.save(
+                                            userAuthority))
                             .flatMap(userAuthoritySaved ->
-                                    userService.getUserWithAuthoritiesByEmailAsync(
+                                    userService.getUserWithAuthoritiesByEmail(
                                             fetchedUser.getEmail()));
                 });
     }
@@ -144,6 +179,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private Mono<Authentication> generateAuthenticationToken(LoginRequest loginRequest) {
+        LOGGER.info("Generating authentication token");
         UsernamePasswordAuthenticationToken authToken =
                 new UsernamePasswordAuthenticationToken(loginRequest.email(),
                         loginRequest.password());
@@ -151,9 +187,11 @@ public class AuthServiceImpl implements AuthService {
                 .switchIfEmpty(Mono.error(
                         new ResponseStatusException(HttpStatusCode.valueOf(401),
                                 "Bad credentials"))) // TODO Create custom exceptions
-                .onErrorMap(
-                        error -> new ResponseStatusException(HttpStatusCode.valueOf(401),
-                                "Bad credentials")); // TODO Create custom exceptions
+                .onErrorMap(ex -> {
+                    LOGGER.debug("Error generating authentication token { }", ex);
+                    return new ResponseStatusException(HttpStatusCode.valueOf(401),
+                            ex.getMessage());
+                }); // TODO Create custom exceptions
     }
 
     private Mono<Map<String, String>> generateTokensAndCookies(

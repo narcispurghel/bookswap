@@ -8,7 +8,6 @@ public record UserDto(
         String email,
         String firstName,
         String lastName,
-        String password,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {

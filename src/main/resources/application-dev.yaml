@@ -22,6 +22,9 @@ spring:
     webflux:
       formLogin:
         enabled: false
+  devtools:
+    restart:
+      enabled: true
 
 logging:
   level:
@@ -29,19 +32,23 @@ logging:
     org:
       springframework:
         security: DEBUG
-      flywaydb: INFO
+        mail: DEBUG
+        flywaydb: INFO
     jakarta:
       validation: DEBUG
     com:
       github:
         narcispurghel:
-          bookswap:
-            security:
-              impl:
-                JwtSecurityFilterImpl: DEBUG
-
-
+          bookswap: DEBUG
 
 security:
   jwt:
     secret-key: ${SECURITY_JWT_SECRET_KEY}
+  mail:
+    host: ${MAIL_HOST}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    port: ${MAIL_PORT}
+    protocol: ${MAIL_PROTOCOL}
+    auth: ${MAIL_AUTH}
+    enabled: ${MAIL_ENABLED}

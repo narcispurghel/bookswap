@@ -96,10 +96,8 @@ public class JwtSecurityFilterImpl implements JwtSecurityFilter {
             } catch (JWTVerificationException refreshTokenJwtEx) {
                 LOGGER.debug("refreshToken is not valid");
                 LOGGER.debug(ERROR_LOG);
-                return Mono.error(
-                        new ResponseStatusException(
-                                HttpStatusCode.valueOf(401),
-                                "Invalid refresh token")
+                return Mono.error(new ResponseStatusException(HttpStatusCode.valueOf(401),
+                        "Invalid refresh token")
                 );
             }
         }

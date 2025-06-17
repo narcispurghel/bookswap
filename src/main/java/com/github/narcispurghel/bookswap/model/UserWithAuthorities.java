@@ -9,7 +9,6 @@ public record UserWithAuthorities(
         String email,
         String firstName,
         String lastName,
-        String password,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         Set<AuthorityDto> authorities

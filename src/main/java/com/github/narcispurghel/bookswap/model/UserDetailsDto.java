@@ -10,22 +10,33 @@ import java.util.Objects;
 import java.util.Set;
 
 public class UserDetailsDto implements UserDetails {
+
     private final String username;
-    private final String password;
+
+    private final String passwordHash;
+
+    private final boolean isEmailVerified;
+
     private final boolean isAccountNonExpired;
+
     private final boolean isAccountNonLocked;
+
     private final boolean isCredentialsNonExpired;
+
     private final boolean isEnabled;
+
     private final Set<Authority> authorities;
 
     public UserDetailsDto(String username,
-            String password,
+            String passwordHash,
+            boolean isEmailVerified,
             boolean isAccountNonExpired,
             boolean isAccountNonLocked,
             boolean isCredentialsNonExpired,
             boolean isEnabled, Set<Authority> authorities) {
         this.username = Objects.requireNonNull(username);
-        this.password = Objects.requireNonNull(password);
+        this.passwordHash = Objects.requireNonNull(passwordHash);
+        this.isEmailVerified = isEmailVerified;
         this.isAccountNonExpired = isAccountNonExpired;
         this.isAccountNonLocked = isAccountNonLocked;
         this.isCredentialsNonExpired = isCredentialsNonExpired;
@@ -33,56 +44,71 @@ public class UserDetailsDto implements UserDetails {
         this.authorities = new HashSet<>(Objects.requireNonNull(authorities));
     }
 
+
+    public boolean isEmailVerified() {
+        return isEmailVerified;
+    }
+
     /**
      * @return a NonNull collection of {@link Authority authority}
      */
-    @Override public Collection<? extends GrantedAuthority> getAuthorities() {
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
         return Objects.requireNonNull(authorities);
     }
 
-    @Override public String getPassword() {
-        return password;
+    @Override
+    public String getPassword() {
+        return passwordHash;
     }
 
     /**
      * @return the username used to authenticate the user (never null)
      */
-    @Override public String getUsername() {
+    @Override
+    public String getUsername() {
         return Objects.requireNonNull(username);
     }
 
-    @Override public boolean isAccountNonExpired() {
+    @Override
+    public boolean isAccountNonExpired() {
         return isAccountNonExpired;
     }
 
-    @Override public boolean isAccountNonLocked() {
+    @Override
+    public boolean isAccountNonLocked() {
         return isAccountNonLocked;
     }
 
-    @Override public boolean isCredentialsNonExpired() {
+    @Override
+    public boolean isCredentialsNonExpired() {
         return isCredentialsNonExpired;
     }
 
-    @Override public boolean isEnabled() {
+    @Override
+    public boolean isEnabled() {
         return isEnabled;
     }
 
-    @Override public boolean equals(Object o) {
+    @Override
+    public boolean equals(Object o) {
         if (!(o instanceof UserDetailsDto that)) {
             return false;
         }
-        return isAccountNonExpired == that.isAccountNonExpired &&
+        return isEmailVerified == that.isEmailVerified &&
+                isAccountNonExpired == that.isAccountNonExpired &&
                 isAccountNonLocked == that.isAccountNonLocked &&
                 isCredentialsNonExpired == that.isCredentialsNonExpired &&
                 isEnabled == that.isEnabled &&
                 Objects.equals(username, that.username) &&
-                Objects.equals(password, that.password) &&
+                Objects.equals(passwordHash, that.passwordHash) &&
                 Objects.equals(authorities, that.authorities);
     }
 
     @Override public int hashCode() {
         return Objects.hash(username,
-                password,
+                passwordHash,
+                isEmailVerified,
                 isAccountNonExpired,
                 isAccountNonLocked,
                 isCredentialsNonExpired,

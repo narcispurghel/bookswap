@@ -15,14 +15,14 @@ import java.util.UUID;
 public interface UserRepository extends ReactiveCrudRepository<User, UUID> {
 
     @Query(value = """
-            SELECT u.id, u.email, u.first_name, u.last_name, u.password, u.created_at, u.updated_at
+            SELECT u.id, u.email, u.first_name, u.last_name, u.password_hash, u.created_at, u.updated_at
             FROM users u
             WHERE u.email = :email
             """)
     Mono<UserDto> findUserDtoByEmail(@Param(value = "email") String email);
 
     @Query(value = """
-            SELECT u.id, u.email, u.password, u.is_account_non_expired, u.is_account_non_locked, u.is_credentials_non_expired, u.is_enabled
+            SELECT u.id, u.email, u.password_hash, u.is_email_verified, u.is_account_non_expired, u.is_account_non_locked, u.is_credentials_non_expired, u.is_enabled
             FROM users u
             WHERE u.email = :email
             """)

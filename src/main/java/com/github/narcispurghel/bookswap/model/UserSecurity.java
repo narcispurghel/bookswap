@@ -6,6 +6,7 @@ public record UserSecurity(
         UUID id,
         String email,
         String password,
+        boolean isEmailVerified,
         boolean isAccountNonExpired,
         boolean isAccountNonLocked,
         boolean isCredentialsNonExpired,

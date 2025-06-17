@@ -9,17 +9,30 @@ import java.util.UUID;
 
 @Table("users")
 public class User {
+
     @Id
     private UUID id;
+
     private String email;
+
     private String firstName;
+
     private String lastName;
-    private String password;
+
+    private String passwordHash;
+
+    private boolean isEmailVerified;
+
     private boolean isAccountNonExpired = true;
+
     private boolean isAccountNonLocked = true;
+
     private boolean isCredentialsNonExpired = true;
+
     private boolean isEnabled = true;
+
     private LocalDateTime createdAt = LocalDateTime.now();
+
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     public UUID getId() {
@@ -54,12 +67,20 @@ public class User {
         this.lastName = lastName;
     }
 
-    public String getPassword() {
-        return password;
+    public String getPasswordHash() {
+        return passwordHash;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    public boolean isEmailVerified() {
+        return isEmailVerified;
+    }
+
+    public void setEmailVerified(boolean emailVerified) {
+        isEmailVerified = emailVerified;
     }
 
     public boolean isAccountNonExpired() {
@@ -114,7 +135,8 @@ public class User {
         if (!(o instanceof User user)) {
             return false;
         }
-        return isAccountNonExpired == user.isAccountNonExpired &&
+        return  isEmailVerified == user.isEmailVerified &&
+                isAccountNonExpired == user.isAccountNonExpired &&
                 isAccountNonLocked == user.isAccountNonLocked &&
                 isCredentialsNonExpired == user.isCredentialsNonExpired &&
                 isEnabled == user.isEnabled &&
@@ -122,7 +144,7 @@ public class User {
                 Objects.equals(email, user.email) &&
                 Objects.equals(firstName, user.firstName) &&
                 Objects.equals(lastName, user.lastName) &&
-                Objects.equals(password, user.password) &&
+                Objects.equals(passwordHash, user.passwordHash) &&
                 Objects.equals(createdAt, user.createdAt) &&
                 Objects.equals(updatedAt, user.updatedAt);
     }
@@ -132,7 +154,8 @@ public class User {
                 email,
                 firstName,
                 lastName,
-                password,
+                passwordHash,
+                isEmailVerified,
                 isAccountNonExpired,
                 isAccountNonLocked,
                 isCredentialsNonExpired,

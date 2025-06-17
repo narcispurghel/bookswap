@@ -1,11 +1,11 @@
 package com.github.narcispurghel.bookswap.controller;
 
-import com.github.narcispurghel.bookswap.model.Data;
-import com.github.narcispurghel.bookswap.model.LoginRequest;
-import com.github.narcispurghel.bookswap.model.SignupRequest;
-import com.github.narcispurghel.bookswap.model.UserWithAuthorities;
+import com.github.narcispurghel.bookswap.model.*;
 import com.github.narcispurghel.bookswap.service.AuthService;
+import com.github.narcispurghel.bookswap.service.EmailVerificationService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,18 +23,25 @@ import static com.github.narcispurghel.bookswap.constant.EndpointsConstants.*;
 @RequestMapping(value = AUTHENTICATION_ENDPOINT,
         produces = MediaType.APPLICATION_JSON_VALUE)
 public class AuthController {
-    private final AuthService authService;
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
 
-    public AuthController(AuthService authService) {
+    private final AuthService authService;
+    private final EmailVerificationService emailVerificationService;
+
+    public AuthController(AuthService authService,
+            EmailVerificationService emailVerificationService) {
         this.authService = authService;
+        this.emailVerificationService = emailVerificationService;
     }
 
     @PostMapping(SIGNUP_ENDPOINT)
     public Mono<ResponseEntity<Data<UserWithAuthorities>>> signup(
             @RequestBody @Valid Data<SignupRequest> requestBody) {
-        return authService.saveUserAsync(requestBody)
-                .map(userWithAuthorities -> ResponseEntity.ok(Data.body(
-                        userWithAuthorities)));
+        LOGGER.debug("RequestBody is {}", requestBody);
+        return authService.signup(requestBody.data())
+                .doOnNext(data -> LOGGER.debug("Creating response"))
+                .map(data -> ResponseEntity.status(201).body(Data.body(data)))
+                .doOnError(ex -> LOGGER.debug("Exception occurred { }", ex));
     }
 
     @PostMapping(LOGIN_ENDPOINT)
