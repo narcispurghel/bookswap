@@ -1,4 +1,6 @@
-## To successfully run the BookSwap Spring Boot application on your local machine, please ensure you have the following prerequisites and configurations in place:
+## This repository contains the source code for BookSwap, a Spring Boot application I created to learn and experiment with Spring WebFlux. The project focuses on building a reactive, non-blocking REST API to handle book exchange operations. Through this application, I aimed to deepen my understanding of reactive programming concepts and apply them using the Spring WebFlux framework.
+
+### To successfully run the BookSwap Spring Boot application on your local machine, please ensure you have the following prerequisites and configurations in place:
 
 ## 1. Software Prerequisites
 - Java Development Kit (JDK) 21 or newer: Ensure you have a compatible JDK installed.
